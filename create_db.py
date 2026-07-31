@@ -1,28 +1,25 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import Error
+
+load_dotenv()
 
 
 def create_database():
 
     try:
-        # koneksi awal tanpa database
+        # Koneksi ke database Aiven
         conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password=""
+            host=os.environ["DB_HOST"],
+            port=int(os.environ["DB_PORT"]),
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            database=os.environ["DB_NAME"],
+            ssl_ca="ca.pem"
         )
 
         cursor = conn.cursor()
-
-        # buat database
-        cursor.execute(
-            "CREATE DATABASE IF NOT EXISTS zakat_masjid"
-        )
-
-        cursor.execute(
-            "USE zakat_masjid"
-        )
-
 
         # =====================
         # TABLE USERS
@@ -39,7 +36,6 @@ def create_database():
         )
         """)
 
-
         # =====================
         # TABLE MUZAKKI
         # =====================
@@ -53,7 +49,6 @@ def create_database():
             pekerjaan VARCHAR(50)
         )
         """)
-
 
         # =====================
         # TABLE MUSTAHIK
@@ -69,7 +64,6 @@ def create_database():
         )
         """)
 
-
         # =====================
         # TABLE KATEGORI
         # =====================
@@ -81,7 +75,6 @@ def create_database():
             keterangan TEXT
         )
         """)
-
 
         # =====================
         # TABLE TRANSAKSI
@@ -106,7 +99,6 @@ def create_database():
         )
         """)
 
-
         # =====================
         # TABLE PENYALURAN
         # =====================
@@ -124,8 +116,6 @@ def create_database():
             ON DELETE CASCADE
         )
         """)
-
-
 
         # =====================
         # USER ADMIN DEFAULT
@@ -150,7 +140,6 @@ def create_database():
         )
         """)
 
-
         # =====================
         # DATA KATEGORI DEFAULT
         # =====================
@@ -169,29 +158,22 @@ def create_database():
         (4,'Sedekah','Amal sosial')
         """)
 
-
         conn.commit()
-
 
         cursor.close()
         conn.close()
 
-
         print("================================")
         print("DATABASE BERHASIL DIBUAT")
-        print("Database : zakat_masjid")
+        print("Database : defaultdb")
         print("User     : admin")
         print("Password : admin123")
         print("================================")
 
-
     except Error as e:
-
         print("Gagal membuat database")
         print(e)
 
 
-
 if __name__ == "__main__":
-
     create_database()
