@@ -9,37 +9,49 @@ def laporan():
 
     conn = get_connection()
 
-    # Total zakat masuk
-    masuk = pd.read_sql("""
+    # ==========================
+    # TOTAL PENERIMAAN
+    # ==========================
+
+    masuk = pd.read_sql(
+        """
         SELECT COALESCE(SUM(jumlah_bayar),0) AS total
         FROM transaksi_zakat
-    """, conn)
+        """,
+        conn
+    )
 
-    total_masuk = masuk["total"][0]
+    total_masuk = float(masuk.iloc[0]["total"])
 
+    # ==========================
+    # TOTAL PENYALURAN
+    # ==========================
 
-    # Total penyaluran
-    keluar = pd.read_sql("""
+    keluar = pd.read_sql(
+        """
         SELECT COALESCE(SUM(jumlah),0) AS total
         FROM penyaluran
-    """, conn)
+        """,
+        conn
+    )
 
-    total_keluar = keluar["total"][0]
-
+    total_keluar = float(keluar.iloc[0]["total"])
 
     saldo = total_masuk - total_keluar
 
+    # ==========================
+    # RINGKASAN
+    # ==========================
 
-    # Ringkasan
     col1, col2, col3 = st.columns(3)
 
     col1.metric(
-        "💰 Zakat Masuk",
+        "💰 Total Zakat Masuk",
         f"Rp {total_masuk:,.0f}".replace(",", ".")
     )
 
     col2.metric(
-        "🎁 Penyaluran",
+        "🎁 Total Penyaluran",
         f"Rp {total_keluar:,.0f}".replace(",", ".")
     )
 
@@ -48,45 +60,90 @@ def laporan():
         f"Rp {saldo:,.0f}".replace(",", ".")
     )
 
-
     st.divider()
 
+    # ==========================
+    # DATA PENERIMAAN
+    # ==========================
 
-    # Riwayat penerimaan
-    st.subheader("📋 Data Penerimaan Zakat")
+    st.subheader("📋 Riwayat Penerimaan Zakat")
 
-    data_masuk = pd.read_sql("""
-        SELECT 
-            tanggal,
-            id_muzakki,
-            id_kategori,
-            jumlah_bayar,
-            keterangan
-        FROM transaksi_zakat
-    """, conn)
+    data_masuk = pd.read_sql(
+        """
+        SELECT
+            t.id,
+            t.tanggal,
+            m.nama AS muzakki,
+            k.nama AS kategori_zakat,
+            t.jumlah_bayar,
+            t.keterangan
+        FROM transaksi_zakat t
+        JOIN muzakki m
+            ON t.id_muzakki = m.id
+        JOIN kategori_zakat k
+            ON t.id_kategori = k.id
+        ORDER BY t.id DESC
+        """,
+        conn
+    )
 
     st.dataframe(
         data_masuk,
-        use_container_width=True
+        use_container_width=True,
+        hide_index=True
     )
 
+    # ==========================
+    # DATA PENYALURAN
+    # ==========================
 
-    # Riwayat penyaluran
-    st.subheader("🎁 Data Penyaluran Zakat")
+    st.subheader("🎁 Riwayat Penyaluran Zakat")
 
-    data_keluar = pd.read_sql("""
+    data_keluar = pd.read_sql(
+        """
         SELECT
-            tanggal,
-            id_mustahik,
-            jumlah,
-            keterangan
-        FROM penyaluran
-    """, conn)
+            p.id,
+            p.tanggal,
+            m.nama AS mustahik,
+            p.jumlah,
+            p.keterangan
+        FROM penyaluran p
+        JOIN mustahik m
+            ON p.id_mustahik = m.id
+        ORDER BY p.id DESC
+        """,
+        conn
+    )
 
     st.dataframe(
         data_keluar,
-        use_container_width=True
+        use_container_width=True,
+        hide_index=True
     )
 
+    # ==========================
+    # REKAPITULASI
+    # ==========================
+
+    st.divider()
+
+    st.subheader("📊 Rekapitulasi")
+
+    rekap = pd.DataFrame(
+        {
+            "Keterangan": [
+                "Total Penerimaan",
+                "Total Penyaluran",
+                "Saldo Akhir"
+            ],
+            "Nominal": [
+                f"Rp {total_masuk:,.0f}".replace(",", "."),
+                f"Rp {total_keluar:,.0f}".replace(",", "."),
+                f"Rp {saldo:,.0f}".replace(",", ".")
+            ]
+        }
+    )
+
+    st.table(rekap)
 
     conn.close()

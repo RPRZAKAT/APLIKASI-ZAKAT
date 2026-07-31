@@ -5,25 +5,30 @@ def login(conn, username, password):
 
     cursor = conn.cursor(dictionary=True)
 
+    try:
 
-    query = """
-    SELECT *
-    FROM users
-    WHERE username = %s
-    AND password = %s
-    """
+        query = """
+            SELECT
+                id,
+                username,
+                nama_lengkap,
+                role,
+                status
+            FROM users
+            WHERE username = %s
+            AND password = %s
+            LIMIT 1
+        """
 
+        cursor.execute(
+            query,
+            (username, password)
+        )
 
-    cursor.execute(
-        query,
-        (username, password)
-    )
+        user = cursor.fetchone()
 
+        return user
 
-    user = cursor.fetchone()
+    finally:
 
-
-    cursor.close()
-
-
-    return user
+        cursor.close()

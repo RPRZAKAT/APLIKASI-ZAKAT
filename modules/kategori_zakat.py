@@ -7,13 +7,10 @@ def kategori_zakat():
 
     st.header("📂 Kategori Zakat")
 
-    st.write(
-        "Kelola jenis zakat yang tersedia pada sistem."
-    )
+    st.write("Kelola jenis zakat yang tersedia pada sistem.")
 
     conn = get_connection()
     cursor = conn.cursor()
-
 
     # ==========================
     # TAMBAH KATEGORI
@@ -21,40 +18,37 @@ def kategori_zakat():
 
     with st.form("form_kategori"):
 
-        nama = st.text_input(
-            "Nama Zakat"
-        )
+        nama = st.text_input("Nama Zakat")
 
-        keterangan = st.text_input(
-            "Keterangan"
-        )
+        keterangan = st.text_input("Keterangan")
 
-        simpan = st.form_submit_button(
-            "Simpan"
-        )
-
+        simpan = st.form_submit_button("Simpan")
 
         if simpan:
 
-            cursor.execute("""
-                INSERT INTO kategori_zakat
-                (nama, keterangan)
-                VALUES (?,?)
-            """,
-            (
-                nama,
-                keterangan
-            ))
+            if nama.strip() == "":
 
-            conn.commit()
+                st.warning("Nama kategori wajib diisi.")
 
-            st.success(
-                "Kategori zakat berhasil disimpan"
-            )
+            else:
 
-            st.rerun()
+                cursor.execute(
+                    """
+                    INSERT INTO kategori_zakat
+                    (nama, keterangan)
+                    VALUES (%s, %s)
+                    """,
+                    (
+                        nama,
+                        keterangan
+                    )
+                )
 
+                conn.commit()
 
+                st.success("✅ Kategori zakat berhasil disimpan")
+
+                st.rerun()
 
     # ==========================
     # TAMPIL DATA
@@ -62,15 +56,10 @@ def kategori_zakat():
 
     st.subheader("📋 Daftar Kategori Zakat")
 
-
     data = pd.read_sql(
-        """
-        SELECT *
-        FROM kategori_zakat
-        """,
+        "SELECT * FROM kategori_zakat",
         conn
     )
-
 
     st.dataframe(
         data,
@@ -78,5 +67,5 @@ def kategori_zakat():
         hide_index=True
     )
 
-
+    cursor.close()
     conn.close()

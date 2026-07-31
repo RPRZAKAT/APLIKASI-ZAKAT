@@ -15,9 +15,9 @@ def data_master():
     conn = get_connection()
     cursor = conn.cursor()
 
-
-    # ================= MUZAKKI =================
-
+    # =======================
+    # DATA MUZAKKI
+    # =======================
     if pilihan == "Muzakki":
 
         st.subheader("👤 Data Muzakki")
@@ -27,22 +27,31 @@ def data_master():
             nama = st.text_input("Nama")
             alamat = st.text_input("Alamat")
             no_hp = st.text_input("No HP")
+            pekerjaan = st.text_input("Pekerjaan")
 
             simpan = st.form_submit_button("Simpan")
 
             if simpan:
 
-                cursor.execute("""
-                    INSERT INTO muzakki
-                    (nama, alamat, no_hp)
-                    VALUES (?,?,?)
-                """,
-                (nama, alamat, no_hp))
+                if nama == "":
+                    st.warning("Nama wajib diisi.")
 
-                conn.commit()
-                st.success("Data muzakki tersimpan")
-                st.rerun()
+                else:
 
+                    cursor.execute(
+                        """
+                        INSERT INTO muzakki
+                        (nama, alamat, no_hp, pekerjaan)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (nama, alamat, no_hp, pekerjaan)
+                    )
+
+                    conn.commit()
+
+                    st.success("✅ Data muzakki berhasil disimpan")
+
+                    st.rerun()
 
         data = pd.read_sql(
             "SELECT * FROM muzakki",
@@ -54,9 +63,9 @@ def data_master():
             use_container_width=True
         )
 
-
-    # ================= MUSTAHIK =================
-
+    # =======================
+    # DATA MUSTAHIK
+    # =======================
     else:
 
         st.subheader("🤝 Data Mustahik")
@@ -78,21 +87,31 @@ def data_master():
                 ]
             )
 
+            no_hp = st.text_input("No HP")
+
             simpan = st.form_submit_button("Simpan")
 
             if simpan:
 
-                cursor.execute("""
-                    INSERT INTO mustahik
-                    (nama, alamat, kategori)
-                    VALUES (?,?,?)
-                """,
-                (nama, alamat, kategori))
+                if nama == "":
+                    st.warning("Nama wajib diisi.")
 
-                conn.commit()
-                st.success("Data mustahik tersimpan")
-                st.rerun()
+                else:
 
+                    cursor.execute(
+                        """
+                        INSERT INTO mustahik
+                        (nama, alamat, kategori, no_hp)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (nama, alamat, kategori, no_hp)
+                    )
+
+                    conn.commit()
+
+                    st.success("✅ Data mustahik berhasil disimpan")
+
+                    st.rerun()
 
         data = pd.read_sql(
             "SELECT * FROM mustahik",
@@ -104,5 +123,5 @@ def data_master():
             use_container_width=True
         )
 
-
+    cursor.close()
     conn.close()

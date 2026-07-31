@@ -4,136 +4,165 @@ from config.db_connection import get_connection
 
 def dashboard():
 
-    st.title("🕌 Dashboard Zakat Masjid")
+    st.title("🕌 Dashboard Sistem Informasi Zakat Masjid")
     st.caption("Sistem Informasi Pengelolaan Zakat, Infaq, dan Sedekah")
 
     st.divider()
 
-    # Koneksi database
     conn = get_connection()
     cursor = conn.cursor()
 
-    # ==========================
-    # DATA STATISTIK
-    # ==========================
+    # =====================================
+    # JUMLAH MUZAKKI
+    # =====================================
 
-    # Jumlah Muzakki
     cursor.execute("SELECT COUNT(*) FROM muzakki")
     jumlah_muzakki = cursor.fetchone()[0]
 
-    # Jumlah Mustahik
+    # =====================================
+    # JUMLAH MUSTAHIK
+    # =====================================
+
     cursor.execute("SELECT COUNT(*) FROM mustahik")
     jumlah_mustahik = cursor.fetchone()[0]
 
-    # Total Zakat Masuk
+    # =====================================
+    # TOTAL ZAKAT MASUK
+    # =====================================
+
     cursor.execute("""
         SELECT COALESCE(SUM(jumlah_bayar),0)
         FROM transaksi_zakat
     """)
+
     total_zakat = cursor.fetchone()[0]
 
-    # Total Penyaluran
+    if total_zakat is None:
+        total_zakat = 0
+
+    # =====================================
+    # TOTAL PENYALURAN
+    # =====================================
+
     cursor.execute("""
         SELECT COALESCE(SUM(jumlah),0)
         FROM penyaluran
     """)
+
     total_penyaluran = cursor.fetchone()[0]
 
+    if total_penyaluran is None:
+        total_penyaluran = 0
+
+    # =====================================
+    # SALDO
+    # =====================================
+
+    saldo = total_zakat - total_penyaluran
+
+    # =====================================
+    # TOTAL TRANSAKSI
+    # =====================================
+
+    cursor.execute("SELECT COUNT(*) FROM transaksi_zakat")
+    jumlah_transaksi = cursor.fetchone()[0]
+
+    cursor.close()
     conn.close()
 
-
-    # Hitung saldo
-    saldo_zakat = total_zakat - total_penyaluran
-
-
-    # ==========================
-    # KARTU STATISTIK
-    # ==========================
+    # =====================================
+    # KARTU DASHBOARD
+    # =====================================
 
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric(
-        "👤 Muzakki",
-        jumlah_muzakki
-    )
+    with col1:
+        st.metric(
+            "👤 Muzakki",
+            jumlah_muzakki
+        )
 
-    col2.metric(
-        "🤝 Mustahik",
-        jumlah_mustahik
-    )
+    with col2:
+        st.metric(
+            "🤝 Mustahik",
+            jumlah_mustahik
+        )
 
-    col3.metric(
-        "💰 Zakat Masuk",
-        f"Rp {total_zakat:,.0f}".replace(",", ".")
-    )
+    with col3:
+        st.metric(
+            "💰 Zakat Masuk",
+            f"Rp {total_zakat:,.0f}".replace(",", ".")
+        )
 
-    col4.metric(
-        "💳 Saldo Zakat",
-        f"Rp {saldo_zakat:,.0f}".replace(",", ".")
-    )
-
-
-    st.divider()
-
-
-    # ==========================
-    # SELAMAT DATANG
-    # ==========================
-
-    st.subheader("📋 Selamat Datang")
-
-    st.write("""
-Aplikasi Pengelolaan Zakat Masjid membantu pengurus masjid dalam
-melakukan pencatatan dan pengelolaan zakat secara mudah dan terstruktur.
-
-Sistem ini mencakup:
-
-- 👤 Data Muzakki
-- 🤝 Data Mustahik
-- 📂 Kategori Zakat
-- 💰 Transaksi Zakat
-- 🎁 Penyaluran Zakat
-- 📑 Laporan Zakat
-    """)
-
+    with col4:
+        st.metric(
+            "💳 Saldo",
+            f"Rp {saldo:,.0f}".replace(",", ".")
+        )
 
     st.divider()
 
+    # =====================================
+    # RINGKASAN
+    # =====================================
 
-    # ==========================
-    # INFORMASI KEUANGAN
-    # ==========================
-
-    st.subheader("📊 Ringkasan Keuangan")
+    st.subheader("📊 Ringkasan Sistem")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.success(
-            f"""
-💰 Total Penerimaan Zakat
 
-Rp {total_zakat:,.0f}
-""".replace(",", ".")
-        )
+        st.success(f"""
+Jumlah Muzakki
 
+**{jumlah_muzakki} Orang**
+
+Jumlah Mustahik
+
+**{jumlah_mustahik} Orang**
+""")
 
     with col2:
-        st.info(
-            f"""
-🎁 Total Penyaluran Zakat
 
-Rp {total_penyaluran:,.0f}
-""".replace(",", ".")
-        )
+        st.info(f"""
+Jumlah Transaksi
 
+**{jumlah_transaksi} Transaksi**
+
+Saldo Saat Ini
+
+**Rp {saldo:,.0f}**
+""".replace(",", "."))
 
     st.divider()
 
+    # =====================================
+    # INFORMASI KEUANGAN
+    # =====================================
 
-    # ==========================
-    # STATUS DATA
-    # ==========================
+    st.subheader("💰 Informasi Keuangan")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        st.success(
+            f"Total Penerimaan\n\nRp {total_zakat:,.0f}".replace(",", ".")
+        )
+
+    with col2:
+
+        st.warning(
+            f"Total Penyaluran\n\nRp {total_penyaluran:,.0f}".replace(",", ".")
+        )
+
+    st.divider()
+
+    # =====================================
+    # STATUS DATABASE
+    # =====================================
+
+    st.subheader("📌 Status Sistem")
 
     if jumlah_muzakki == 0:
 
@@ -141,8 +170,31 @@ Rp {total_penyaluran:,.0f}
             "Belum ada data muzakki. Silakan tambahkan data terlebih dahulu."
         )
 
+    elif jumlah_mustahik == 0:
+
+        st.warning(
+            "Belum ada data mustahik. Silakan tambahkan data terlebih dahulu."
+        )
+
     else:
 
         st.success(
-            "✅ Data zakat berhasil terhubung dengan database."
+            "✅ Sistem berhasil terhubung dengan database MySQL."
         )
+
+    st.divider()
+
+    # =====================================
+    # PETUNJUK PENGGUNAAN
+    # =====================================
+
+    st.subheader("📖 Petunjuk Penggunaan")
+
+    st.markdown("""
+1. Tambahkan data **Muzakki**.
+2. Tambahkan data **Mustahik**.
+3. Tambahkan **Kategori Zakat**.
+4. Input transaksi penerimaan zakat.
+5. Input transaksi penyaluran zakat.
+6. Lihat laporan pada menu **Laporan**.
+""")
