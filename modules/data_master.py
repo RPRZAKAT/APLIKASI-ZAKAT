@@ -5,122 +5,223 @@ from config.db_connection import get_connection
 
 def data_master():
 
-    st.header("📂 Data Master Zakat")
-
-    pilihan = st.selectbox(
-        "Pilih Data",
-        ["Muzakki", "Mustahik"]
-    )
+    st.header("📂 Data Master")
+    st.caption("Kelola data Muzakki dan Mustahik.")
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    # =======================
+    menu = st.selectbox(
+        "Pilih Data",
+        ["Muzakki", "Mustahik"]
+    )
+
+    # ====================================================
     # DATA MUZAKKI
-    # =======================
-    if pilihan == "Muzakki":
+    # ====================================================
+
+    if menu == "Muzakki":
 
         st.subheader("👤 Data Muzakki")
 
-        with st.form("form_muzakki"):
+        with st.expander("➕ Tambah Data Muzakki", expanded=True):
 
-            nama = st.text_input("Nama")
-            alamat = st.text_input("Alamat")
-            no_hp = st.text_input("No HP")
-            pekerjaan = st.text_input("Pekerjaan")
+            with st.form("form_muzakki"):
 
-            simpan = st.form_submit_button("Simpan")
+                nama = st.text_input("Nama Lengkap")
+                alamat = st.text_area("Alamat")
+                no_hp = st.text_input("Nomor HP")
+                pekerjaan = st.text_input("Pekerjaan")
 
-            if simpan:
+                simpan = st.form_submit_button("💾 Simpan")
 
-                if nama == "":
-                    st.warning("Nama wajib diisi.")
+                if simpan:
 
-                else:
+                    if not nama.strip():
 
-                    cursor.execute(
-                        """
-                        INSERT INTO muzakki
-                        (nama, alamat, no_hp, pekerjaan)
-                        VALUES (%s, %s, %s, %s)
-                        """,
-                        (nama, alamat, no_hp, pekerjaan)
-                    )
+                        st.warning("Nama wajib diisi.")
 
-                    conn.commit()
+                    else:
 
-                    st.success("✅ Data muzakki berhasil disimpan")
+                        cursor.execute(
+                            """
+                            INSERT INTO muzakki
+                            (nama,alamat,no_hp,pekerjaan)
+                            VALUES(%s,%s,%s,%s)
+                            """,
+                            (
+                                nama,
+                                alamat,
+                                no_hp,
+                                pekerjaan
+                            )
+                        )
 
-                    st.rerun()
+                        conn.commit()
 
-        data = pd.read_sql(
-            "SELECT * FROM muzakki",
-            conn
+                        st.success(
+                            "Data muzakki berhasil disimpan."
+                        )
+
+                        st.rerun()
+
+        cari = st.text_input(
+            "🔍 Cari Nama Muzakki"
         )
+
+        if cari:
+
+            data = pd.read_sql(
+                """
+                SELECT *
+                FROM muzakki
+                WHERE nama LIKE %s
+                ORDER BY id DESC
+                """,
+                conn,
+                params=(f"%{cari}%",)
+            )
+
+        else:
+
+            data = pd.read_sql(
+                """
+                SELECT *
+                FROM muzakki
+                ORDER BY id DESC
+                """,
+                conn
+            )
 
         st.dataframe(
             data,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
-    # =======================
+        st.caption(
+            f"Total Data : {len(data)}"
+        )
+            # ====================================================
     # DATA MUSTAHIK
-    # =======================
+    # ====================================================
+
     else:
 
         st.subheader("🤝 Data Mustahik")
 
-        with st.form("form_mustahik"):
+        with st.expander("➕ Tambah Data Mustahik", expanded=True):
 
-            nama = st.text_input("Nama")
-            alamat = st.text_input("Alamat")
+            with st.form("form_mustahik"):
 
-            kategori = st.selectbox(
-                "Kategori",
-                [
-                    "Fakir",
-                    "Miskin",
-                    "Amil",
-                    "Muallaf",
-                    "Fisabilillah",
-                    "Ibnu Sabil"
-                ]
+                nama = st.text_input("Nama Lengkap")
+                alamat = st.text_area("Alamat")
+
+                kategori = st.selectbox(
+                    "Kategori",
+                    [
+                        "Fakir",
+                        "Miskin",
+                        "Amil",
+                        "Muallaf",
+                        "Fisabilillah",
+                        "Ibnu Sabil"
+                    ]
+                )
+
+                no_hp = st.text_input("Nomor HP")
+
+                simpan = st.form_submit_button("💾 Simpan")
+
+                if simpan:
+
+                    if not nama.strip():
+
+                        st.warning("Nama wajib diisi.")
+
+                    else:
+
+                        cursor.execute(
+                            """
+                            INSERT INTO mustahik
+                            (nama,alamat,kategori,no_hp)
+                            VALUES(%s,%s,%s,%s)
+                            """,
+                            (
+                                nama,
+                                alamat,
+                                kategori,
+                                no_hp
+                            )
+                        )
+
+                        conn.commit()
+
+                        st.success(
+                            "Data mustahik berhasil disimpan."
+                        )
+
+                        st.rerun()
+
+        cari = st.text_input(
+            "🔍 Cari Nama Mustahik"
+        )
+
+        if cari:
+
+            data = pd.read_sql(
+                """
+                SELECT *
+                FROM mustahik
+                WHERE nama LIKE %s
+                ORDER BY id DESC
+                """,
+                conn,
+                params=(f"%{cari}%",)
             )
 
-            no_hp = st.text_input("No HP")
+        else:
 
-            simpan = st.form_submit_button("Simpan")
-
-            if simpan:
-
-                if nama == "":
-                    st.warning("Nama wajib diisi.")
-
-                else:
-
-                    cursor.execute(
-                        """
-                        INSERT INTO mustahik
-                        (nama, alamat, kategori, no_hp)
-                        VALUES (%s, %s, %s, %s)
-                        """,
-                        (nama, alamat, kategori, no_hp)
-                    )
-
-                    conn.commit()
-
-                    st.success("✅ Data mustahik berhasil disimpan")
-
-                    st.rerun()
-
-        data = pd.read_sql(
-            "SELECT * FROM mustahik",
-            conn
-        )
+            data = pd.read_sql(
+                """
+                SELECT *
+                FROM mustahik
+                ORDER BY id DESC
+                """,
+                conn
+            )
 
         st.dataframe(
             data,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.caption(
+            f"Total Data : {len(data)}"
+        )
+
+    # ====================================================
+    # MENU AKSI
+    # ====================================================
+
+    st.divider()
+
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+
+        if st.button("🔄 Refresh Data"):
+
+            st.rerun()
+
+    with col2:
+
+        st.download_button(
+            "📥 Export CSV",
+            data.to_csv(index=False).encode("utf-8"),
+            file_name=f"{menu.lower()}.csv",
+            mime="text/csv"
         )
 
     cursor.close()
